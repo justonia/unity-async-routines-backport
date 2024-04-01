@@ -27,129 +27,134 @@ using AsyncRoutines.Internal;
 
 namespace AsyncRoutines
 {
-	public class RoutineManager
-	{
-		private List<LightResumer> nextFrameResumers = new List<LightResumer>();
-		private List<LightResumer> pendingNextFrameResumers = new List<LightResumer>();
-		private readonly List<Routine> roots = new List<Routine>();
-		private int maxRoot = -1;
+    public class RoutineManager
+    {
+        private List<LightResumer> nextFrameResumers = new List<LightResumer>();
+        private List<LightResumer> pendingNextFrameResumers = new List<LightResumer>();
+        private readonly List<Routine> roots = new List<Routine>();
+        private int maxRoot = -1;
 
-		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         public static void ResetStatics()
         {
             RoutineBase.ResetStatics();
         }
 
-		/// <summary> Resumers managed routines that are waiting for next frame. </summary>
-		public void Update()
-		{
-			foreach (var resumer in nextFrameResumers)
-			{
-				resumer.Resume();
-			}
-			nextFrameResumers.Clear();
+        /// <summary> Resumers managed routines that are waiting for next frame. </summary>
+        public void Update()
+        {
+            foreach (var resumer in nextFrameResumers)
+            {
+                resumer.Resume();
+            }
 
-			//Cleanup dead routines
-			var _maxRoot = maxRoot;
-			maxRoot = -1;
-			for (var i = 0; i <= _maxRoot; ++i)
-			{
-				var root = roots[i];
-				if (root == null)
-				{
-					continue;
-				}
-				if (root.IsDead)
-				{
-					roots[i] = null;
-					Routine.Release(root);
-				}
-				else
-				{
-					maxRoot = i;
-				}
-			}
-		}
+            nextFrameResumers.Clear();
 
-		/// <summary> Prepares next-frame resumers. Should be called in LateUpdate. </summary>
-		public void Flush()
-		{
-			var temp = nextFrameResumers;
-			nextFrameResumers = pendingNextFrameResumers;
-			pendingNextFrameResumers = temp;
-		}
+            //Cleanup dead routines
+            var _maxRoot = maxRoot;
+            maxRoot = -1;
+            for (var i = 0; i <= _maxRoot; ++i)
+            {
+                var root = roots[i];
+                if (root == null)
+                {
+                    continue;
+                }
 
-		/// <summary> Stops all managed routines. </summary>
-		public void StopAll()
-		{
-			for (var i = 0; i < roots.Count; ++i)
-			{
-				if (roots[i] == null)
-				{
-					continue;
-				}
-				Routine.Release(roots[i]);
-				roots[i] = null;
-			}
-		}
+                if (root.IsDead)
+                {
+                    roots[i] = null;
+                    Routine.Release(root);
+                }
+                else
+                {
+                    maxRoot = i;
+                }
+            }
+        }
 
-		/// <summary> Throws an exception in all managed routines. </summary>
-		public void ThrowAll(Exception exception)
-		{
-			for (var i = 0; i < roots.Count; ++i)
-			{
-				var root = roots[i];
-				if (root != null)
-				{
-					root.Throw(exception);
-				}
-			}
-		}
+        /// <summary> Prepares next-frame resumers. Should be called in LateUpdate. </summary>
+        public void Flush()
+        {
+            var temp = nextFrameResumers;
+            nextFrameResumers = pendingNextFrameResumers;
+            pendingNextFrameResumers = temp;
+        }
 
-		/// <summary> Manages and runs a routine. </summary>
-		public RoutineHandle Run(Routine task, Action<Exception> onStop = null)
-		{
-			task.SetManager(this, onStop ?? DefaultOnStop);
+        /// <summary> Stops all managed routines. </summary>
+        public void StopAll()
+        {
+            for (var i = 0; i < roots.Count; ++i)
+            {
+                if (roots[i] == null)
+                {
+                    continue;
+                }
 
-			var added = false;
-			for (var i = 0; i < roots.Count; ++i)
-			{
-				if (roots[i] == null)
-				{
-					maxRoot = Mathf.Max(maxRoot, i);
-					roots[i] = task;
-					added = true;
-					break;
-				}
-			}
-			if (!added)
-			{
-				maxRoot = roots.Count;
-				roots.Add(task);
-			}
+                Routine.Release(roots[i]);
+                roots[i] = null;
+            }
+        }
 
-			task.Step();
-			return new RoutineHandle(task);
-		}
+        /// <summary> Throws an exception in all managed routines. </summary>
+        public void ThrowAll(Exception exception)
+        {
+            for (var i = 0; i < roots.Count; ++i)
+            {
+                var root = roots[i];
+                if (root != null)
+                {
+                    root.Throw(exception);
+                }
+            }
+        }
 
-		/// <summary>
-		/// Internal use only. Schedules a lightweight resumer to be called next frame.
-		/// </summary>
-		public void AddNextFrameResumer(ref LightResumer resumer)
-		{
-			pendingNextFrameResumers.Add(resumer);
-		}
+        /// <summary> Manages and runs a routine. </summary>
+        public RoutineHandle Run(Routine task, Action<Exception> onStop = null)
+        {
+            task.SetManager(this, onStop ?? DefaultOnStop);
 
-		private static void DefaultOnStop(Exception exception)
-		{
+            var added = false;
+            for (var i = 0; i < roots.Count; ++i)
+            {
+                if (roots[i] == null)
+                {
+                    maxRoot = Mathf.Max(maxRoot, i);
+                    roots[i] = task;
+                    added = true;
+                    break;
+                }
+            }
+
+            if (!added)
+            {
+                maxRoot = roots.Count;
+                roots.Add(task);
+            }
+
+            task.Step();
+            return new RoutineHandle(task);
+        }
+
+        /// <summary>
+        /// Internal use only. Schedules a lightweight resumer to be called next frame.
+        /// </summary>
+        public void AddNextFrameResumer(ref LightResumer resumer)
+        {
+            pendingNextFrameResumers.Add(resumer);
+        }
+
+        private static void DefaultOnStop(Exception exception)
+        {
             if (exception != null && exception is not RoutineStoppedException)
-			{
-                if (exception is AggregateException a) {
+            {
+                if (exception is AggregateException a)
+                {
                     Debug.LogError(a.Flatten().ToString());
                 }
 
-				Debug.LogException(exception);
-			}
-		}
-	}
+                Debug.LogException(exception);
+            }
+        }
+    }
 }

@@ -25,39 +25,42 @@ using UnityEngine;
 
 namespace AsyncRoutines
 {
-	public struct RoutineHandle
+    public struct RoutineHandle
     {
         private static RoutineStoppedException StopException = new();
 
-		private UInt64 id;
-		private Routine routine;
+        private UInt64 id;
+        private Routine routine;
 
-		public RoutineHandle(Routine routine)
-		{
-			this.routine = routine;
-			id = routine.Id;
-		}
-
-		/// <summary> Indicates if routine is stopped. </summary>
-		public bool IsDead { get { return (routine == null || id != routine.Id || routine.IsDead); } }
-
-		/// <summary> Stop the routine. </summary>
-		public void Stop()
-		{
-            // Stopping a routine does not allow for any cleanup of objects that might be in running async methods, so we want to stop routines by throwing an exception.
-			if (routine != null && id == routine.Id)
-			{
-				routine.Throw(StopException);
-			}
+        public RoutineHandle(Routine routine)
+        {
+            this.routine = routine;
+            id = routine.Id;
         }
 
-		/// <summary> Throw an exception in the routine. </summary>
-		public void Throw(Exception exception)
-		{
-			if (routine != null && id == routine.Id)
-			{
-				routine.Throw(exception);
-			}
-		}
-	}
+        /// <summary> Indicates if routine is stopped. </summary>
+        public bool IsDead
+        {
+            get { return (routine == null || id != routine.Id || routine.IsDead); }
+        }
+
+        /// <summary> Stop the routine. </summary>
+        public void Stop()
+        {
+            // Stopping a routine does not allow for any cleanup of objects that might be in running async methods, so we want to stop routines by throwing an exception.
+            if (routine != null && id == routine.Id)
+            {
+                routine.Throw(StopException);
+            }
+        }
+
+        /// <summary> Throw an exception in the routine. </summary>
+        public void Throw(Exception exception)
+        {
+            if (routine != null && id == routine.Id)
+            {
+                routine.Throw(exception);
+            }
+        }
+    }
 }

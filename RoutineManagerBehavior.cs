@@ -25,43 +25,46 @@ using UnityEngine;
 
 namespace AsyncRoutines
 {
-	public class RoutineManagerBehavior : MonoBehaviour
-	{
-		public RoutineManager Manager { get { return routineManager; } }
+    public class RoutineManagerBehavior : MonoBehaviour
+    {
+        public RoutineManager Manager
+        {
+            get { return routineManager; }
+        }
 
-		private RoutineManager routineManager = new RoutineManager();
+        private RoutineManager routineManager = new RoutineManager();
 
-		public virtual void Update()
-		{
-			routineManager.Update();
-		}
+        public virtual void Update()
+        {
+            routineManager.Update();
+        }
 
-		public virtual void LateUpdate()
-		{
-			routineManager.Flush();
-		}
+        public virtual void LateUpdate()
+        {
+            routineManager.Flush();
+        }
 
-		public void OnDestroy()
-		{
-			routineManager.StopAll();
-		}
+        public void OnDestroy()
+        {
+            routineManager.StopAll();
+        }
 
-		/// <summary> Manages and runs a routine. </summary>
-		public RoutineHandle Run(Routine routine, Action<Exception> onStop = null)
-		{
-			return routineManager.Run(routine, onStop);
-		}
+        /// <summary> Manages and runs a routine. </summary>
+        public RoutineHandle Run(Routine routine, Action<Exception> onStop = null)
+        {
+            return routineManager.Run(routine, onStop);
+        }
 
-		/// <summary> Stops all managed routines. </summary>
-		public void StopAll()
-		{
-			routineManager.StopAll();
-		}
+        /// <summary> Stops all managed routines. </summary>
+        public void StopAll()
+        {
+            routineManager.StopAll();
+        }
 
-		/// <summary> Throws an exception in all managed routines. </summary>
-		public void ThrowAll(Exception exception)
-		{
-			routineManager.ThrowAll(exception);
-		}
-	}
+        /// <summary> Throws an exception in all managed routines. </summary>
+        public void ThrowAll(Exception exception)
+        {
+            routineManager.ThrowAll(exception);
+        }
+    }
 }

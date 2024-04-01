@@ -24,88 +24,88 @@ using System;
 
 namespace AsyncRoutines.Internal
 {
-	internal class Resumer : IResumer
-	{
-		public Routine routine = null;
-		public UInt64 id = 0;
-		public bool WasResumed { get; private set; }
+    internal class Resumer : IResumer
+    {
+        public Routine routine = null;
+        public UInt64 id = 0;
+        public bool WasResumed { get; private set; }
 
-		public void Resume()
-		{
-			if (routine != null)
-			{
-				if (id == routine.Id)
-				{
-					var _task = routine;
-					Reset();
-					_task.Step();
-				}
-			}
-			else
-			{
-				WasResumed = true;
-			}
-		}
+        public void Resume()
+        {
+            if (routine != null)
+            {
+                if (id == routine.Id)
+                {
+                    var _task = routine;
+                    Reset();
+                    _task.Step();
+                }
+            }
+            else
+            {
+                WasResumed = true;
+            }
+        }
 
-		public void Reset()
-		{
-			WasResumed = false;
-			routine = null;
-			id = 0;
-		}
-	}
+        public void Reset()
+        {
+            WasResumed = false;
+            routine = null;
+            id = 0;
+        }
+    }
 
-	internal class Resumer<T> : IResumer<T>
-	{
-		public Routine<T> routine = null;
-		public UInt64 id = 0;
-		public T result = default(T);
-		public bool WasResumed { get; private set; }
+    internal class Resumer<T> : IResumer<T>
+    {
+        public Routine<T> routine = null;
+        public UInt64 id = 0;
+        public T result = default(T);
+        public bool WasResumed { get; private set; }
 
-		public void Resume(T result)
-		{
-			if (routine != null)
-			{
-				if (id == routine.Id)
-				{
-					var _task = routine;
-					Reset();
-					_task.SetResult(result);
-					_task.Step();
-				}
-			}
-			else
-			{
-				this.result = result;
-				WasResumed = true;
-			}
-		}
+        public void Resume(T result)
+        {
+            if (routine != null)
+            {
+                if (id == routine.Id)
+                {
+                    var _task = routine;
+                    Reset();
+                    _task.SetResult(result);
+                    _task.Step();
+                }
+            }
+            else
+            {
+                this.result = result;
+                WasResumed = true;
+            }
+        }
 
-		public void Reset()
-		{
-			WasResumed = false;
-			routine = null;
-			id = 0;
-		}
-	}
+        public void Reset()
+        {
+            WasResumed = false;
+            routine = null;
+            id = 0;
+        }
+    }
 
-	public struct LightResumer : IResumer
-	{
-		public Routine routine;
-		public UInt64 id;
+    public struct LightResumer : IResumer
+    {
+        public Routine routine;
+        public UInt64 id;
 
-		public void Resume()
-		{
-			if (id == routine.Id)
-			{
-				routine.Step();
-			}
-		}
+        public void Resume()
+        {
+            if (id == routine.Id)
+            {
+                routine.Step();
+            }
+        }
 
-		public void Reset()
-		{
-			routine = null;
-			id = 0;
-		}
-	}
+        public void Reset()
+        {
+            routine = null;
+            id = 0;
+        }
+    }
 }

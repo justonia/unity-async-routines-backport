@@ -25,74 +25,79 @@ using System;
 
 namespace AsyncRoutines.Internal
 {
-	public class Pool<T> where T : class, new()
-	{
-		private readonly Stack<T> pool = new Stack<T>();
-		private int liveCount = 0;
+    public class Pool<T> where T : class, new()
+    {
+        private readonly Stack<T> pool = new Stack<T>();
+        private int liveCount = 0;
 
-		public T Get()
-		{
-			++liveCount;
-			return (pool.Count > 0) ? (pool.Pop() as T) : new T();
-		}
+        public T Get()
+        {
+            ++liveCount;
+            return (pool.Count > 0) ? (pool.Pop() as T) : new T();
+        }
 
-		public void Release(T obj)
-		{
-			--liveCount;
-			pool.Push(obj);
-		}
+        public void Release(T obj)
+        {
+            --liveCount;
+            pool.Push(obj);
+        }
 
-		public void Clear()
-		{
-			pool.Clear();
-		}
+        public void Clear()
+        {
+            pool.Clear();
+        }
 
-		public string Report() { return string.Format("{0}/{1}", liveCount, pool.Count); }
-	}
+        public string Report()
+        {
+            return string.Format("{0}/{1}", liveCount, pool.Count);
+        }
+    }
 
-	public class TypedPool<I>
-	{
-		private readonly Dictionary<Type, Stack<I>> pools = new Dictionary<Type, Stack<I>>();
-		private int liveCount = 0;
+    public class TypedPool<I>
+    {
+        private readonly Dictionary<Type, Stack<I>> pools = new Dictionary<Type, Stack<I>>();
+        private int liveCount = 0;
 
-		public T Get<T>() where T : class, I, new()
-		{
-			++liveCount;
-			var pool = GetPool(typeof(T));
-			return (pool.Count > 0) ? (pool.Pop() as T) : new T();
-		}
+        public T Get<T>() where T : class, I, new()
+        {
+            ++liveCount;
+            var pool = GetPool(typeof(T));
+            return (pool.Count > 0) ? (pool.Pop() as T) : new T();
+        }
 
-		public void Release(I obj)
-		{
-			--liveCount;
-			var pool = GetPool(obj.GetType());
-			pool.Push(obj);
-		}
+        public void Release(I obj)
+        {
+            --liveCount;
+            var pool = GetPool(obj.GetType());
+            pool.Push(obj);
+        }
 
-		public void Clear()
-		{
-			pools.Clear();
-		}
+        public void Clear()
+        {
+            pools.Clear();
+        }
 
-		public string Report()
-		{
-			var c = 0;
-			foreach (var t in pools.Values)
-			{
-				c += t.Count;
-			}
-			return string.Format("{0}/{1}", liveCount, c);
-		}
+        public string Report()
+        {
+            var c = 0;
+            foreach (var t in pools.Values)
+            {
+                c += t.Count;
+            }
 
-		private Stack<I> GetPool(Type type)
-		{
-			if (!pools.ContainsKey(type))
-			{
-				var pool = new Stack<I>();
-				pools[type] = pool;
-				return pool;
-			}
-			return pools[type];
-		}
-	}
+            return string.Format("{0}/{1}", liveCount, c);
+        }
+
+        private Stack<I> GetPool(Type type)
+        {
+            if (!pools.ContainsKey(type))
+            {
+                var pool = new Stack<I>();
+                pools[type] = pool;
+                return pool;
+            }
+
+            return pools[type];
+        }
+    }
 }
